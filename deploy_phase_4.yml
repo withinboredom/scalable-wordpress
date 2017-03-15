@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   seed:
-    image: colinmollenhour/mariadb-galera-swarm
+    image: colinmollenhour/mariadb-galera-swarm:latest
     environment:
       - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
       - MYSQL_USER=wordpress
@@ -17,28 +17,33 @@ services:
       - xtrabackup_password
       - mysql_password
       - mysql_root_password
+    deploy:
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
   node:
-    image: colinmollenhour/mariadb-galera-swarm
-    depends_on:
-      - seed
+    image: colinmollenhour/mariadb-galera-swarm:latest
     environment:
       - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
       - NODE_ADDRESS=eth0
     command: node seed,node
     deploy:
-      replicas: 0
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: on-failure
     secrets:
       - xtrabackup_password
   memcached:
     image: memcached
     command: memcached -m 512m
     deploy:
-      replicas: 1
+      replicas: 2
   wordpress:
     image: withinboredom/scalable-wordpress
-    depends_on:
-      - node
-      - memcached
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress
@@ -52,8 +57,8 @@ services:
       - WORDPRESS_SECURE_AUTH_SALT_FILE=/run/secrets/SECURE_AUTH_SALT
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
-      - MEMCACHED_HOST=memcached
-      - PLUGINS=jetpack@4.7.1,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system
+      - MEMCACHED_HOST=tasks.memcached
+      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system
     secrets:
       - mysql_password
       - AUTH_KEY
@@ -64,10 +69,32 @@ services:
       - SECURE_AUTH_SALT
       - LOGGED_IN_SALT
       - NONCE_SALT
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.port=80"
+        - "traefik.frontend.rule=Host:withinboredom.info,www.withinboredom.info"
+        - "traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
+        - "traefik.frontend.passHostHeader=true"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+  traefik:
+    image: traefik
     ports:
       - 80:80
+      - 8000:8080
+      - 443:433
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --docker --docker.swarmmode --docker.watch --web
     deploy:
-      replicas: 0
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
 
 volumes:
   mysql-data:

@@ -116,7 +116,11 @@ foreach( $servers as $server ) {
 }
 unset( $server );
 unset( $servers );
+
 define( "WP_CACHE", true );
+
+// disable auto-update
+define( 'WP_AUTO_UPDATE_CORE', false );
 
 // If we're behind a proxy server and using HTTPS, we need to alert Wordpress of that fact
 // see also http://codex.wordpress.org/Administration_Over_SSL#Using_a_Reverse_Proxy
