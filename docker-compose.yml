@@ -1,0 +1,61 @@
+version: '3.1'
+
+services:
+  seed:
+    image: colinmollenhour/mariadb-galera-swarm
+    environment:
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - NODE_ADDRESS=eth0
+    command: seed
+    volumes:
+      - mysql-data:/var/lib/mysql
+    secrets:
+      - xtrabackup_password
+      - mysql_password
+      - mysql_root_password
+  node:
+    image: colinmollenhour/mariadb-galera-swarm
+    environment:
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+      - NODE_ADDRESS=eth0
+    command: node seed,node
+    deploy:
+      replicas: 0
+    secrets:
+      - xtrabackup_password
+  memcached:
+    image: memcached
+    command: memcached -m 512m
+    deploy:
+      replicas: 1
+  wordpress:
+    image: withinboredom
+    environment:
+      - WORDPRESS_DB_HOST=node
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/mysql_password
+      - PLUGINS=jetpack
+      - NUM_MEMCACHED=1
+    secrets:
+      - mysql_password
+    ports:
+      - 80:80
+    deploy:
+      replicas: 0
+
+volumes:
+  mysql-data:
+    driver: local
+
+secrets:
+  xtrabackup_password:
+    file: .secrets/xtrabackup_password
+  mysql_password:
+    file: .secrets/mysql_password
+  mysql_root_password:
+    file: .secrets/mysql_root_password
