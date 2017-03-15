@@ -47,6 +47,7 @@ services:
       - WORDPRESS_SECURE_AUTH_SALT_FILE=/run/secrets/SECURE_AUTH_SALT
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
+      - MEMCACHED_HOST=memcached
       - PLUGINS=jetpack@latest,batcache@latest
     secrets:
       - mysql_password

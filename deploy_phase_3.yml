@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   seed:
-    image: colinmollenhour/mariadb-galera-swarm
+    image: colinmollenhour/mariadb-galera-swarm:latest
     environment:
       - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
       - MYSQL_USER=wordpress
@@ -19,8 +19,11 @@ services:
       - mysql_root_password
     deploy:
       replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
   node:
-    image: colinmollenhour/mariadb-galera-swarm
+    image: colinmollenhour/mariadb-galera-swarm:latest
     environment:
       - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
       - NODE_ADDRESS=eth0
@@ -38,8 +41,6 @@ services:
     image: memcached
     command: memcached -m 512m
     deploy:
-      replicas: 1
-    deploy:
       replicas: 2
   wordpress:
     image: withinboredom/scalable-wordpress
@@ -56,6 +57,7 @@ services:
       - WORDPRESS_SECURE_AUTH_SALT_FILE=/run/secrets/SECURE_AUTH_SALT
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
+      - MEMCACHED_HOST=tasks.memcached
     secrets:
       - mysql_password
       - AUTH_KEY

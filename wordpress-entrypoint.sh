@@ -109,7 +109,8 @@ if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
 			awk '/^\/\*.*stop editing.*\*\/$/ && c == 0 { c = 1; system("cat") } { print }' wp-config-sample.php > wp-config.php <<'EOPHP'
 global $memcached_servers;
 $memcached_servers = [];
-$servers = gethostbynamel( 'memcached' );
+$servers = gethostbynamel( getenv( 'MEMCACHED_HOST' ) );
+sort( $servers );
 foreach( $servers as $server ) {
         $memcached_servers[] = [ $server, '11211' ];
 }
