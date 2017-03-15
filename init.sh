@@ -10,7 +10,7 @@ if [ ! -e ./.secrets/ ] ; then
     openssl rand -base64 64 > ./.secrets/AUTH_KEY
     openssl rand -base64 64 > ./.secrets/SECURE_AUTH_KEY
     openssl rand -base64 64 > ./.secrets/LOGGED_IN_KEY
-    openssl rand -base64 64> ./.secrets/NONCE_KEY
+    openssl rand -base64 64 > ./.secrets/NONCE_KEY
     openssl rand -base64 64 > ./.secrets/AUTH_SALT
     openssl rand -base64 64 > ./.secrets/SECURE_AUTH_SALT
     openssl rand -base64 64 > ./.secrets/LOGGED_IN_SALT
