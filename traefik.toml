@@ -211,6 +211,13 @@ OnHostRule = true
 # [[acme.domains]]
 #   main = "local4.com"
 
+defaultEntryPoints = [ "http", "https" ]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
 
 # Entrypoints definition
 #
