@@ -22,7 +22,7 @@ RUN set -ex; \
 	&& docker-php-ext-install opcache \
 	&& git clone https://github.com/php-memcached-dev/php-memcached /usr/src/php/ext/memcached \
     && cd /usr/src/php/ext/memcached && git checkout -b php7 origin/php7 \
-    &&  docker-php-ext-configure memcached --enable-memcached-igbinary \
+    && docker-php-ext-configure memcached --enable-memcached-igbinary \
     && docker-php-ext-install memcached \
 	&& apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
@@ -50,12 +50,15 @@ USER www-data
 RUN wp core download --version=$WORDPRESS_VERSION
 
 COPY wordpress-entrypoint.sh /usr/local/bin/
+COPY healthcheck.sh /usr/local/bin/
 COPY php.ini /usr/local/etc/php/php.ini
 
 COPY object-cache.php /var/www/html/wp-content/object-cache.php
 COPY advanced-cache.php /var/www/html/wp-content/advanced-cache.php
 
 USER root
+
+HEALTHCHECK CMD /usr/local/bin/healthcheck.sh
 
 ENTRYPOINT ["wordpress-entrypoint.sh"]
 CMD ["apache2-foreground"]
