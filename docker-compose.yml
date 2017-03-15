@@ -33,7 +33,7 @@ services:
     deploy:
       replicas: 1
   wordpress:
-    image: withinboredom
+    image: withinboredom/scalable-wordpress
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress
