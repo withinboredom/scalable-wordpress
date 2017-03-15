@@ -72,6 +72,7 @@ services:
       replicas: 2
       labels:
         - "traefik.port=80"
+        - "traefik.frontend.entryPoints=http,https"
         - "traefik.frontend.rule=Host:withinboredom.info,www.withinboredom.info"
         - "traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
         - "traefik.frontend.passHostHeader=true"
@@ -80,7 +81,7 @@ services:
     ports:
       - 80:80
       - 8000:8080
-      - 443:433
+      - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --docker --docker.swarmmode --docker.watch --web
