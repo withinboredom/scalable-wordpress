@@ -831,6 +831,12 @@ class WP_Object_Cache {
 		else
 			$this->servers = array( array( '127.0.0.1', 11211 ) );
 
+		$this->m->setOptions([
+			Memcached::OPT_SERIALIZER => Memcached::SERIALIZER_IGBINARY,
+			Memcached::OPT_LIBKETAMA_COMPATIBLE => true,
+			Memcached::OPT_CONNECT_TIMEOUT => 1000,
+		]);
+
 		$this->addServers( $this->servers );
 
 		/**

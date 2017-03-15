@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 # usage: file_env VAR [DEFAULT]
 #    ie: file_env 'XYZ_DB_PASSWORD' 'example'
@@ -110,13 +109,12 @@ if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
 			awk '/^\/\*.*stop editing.*\*\/$/ && c == 0 { c = 1; system("cat") } { print }' wp-config-sample.php > wp-config.php <<'EOPHP'
 global $memcached_servers;
 $memcached_servers = [];
-for($server = 1; $server <= getenv( 'NUM_MEMCACHED' ); $server++) {
-    $memcached_servers[] = [
-		"memcached_$server",
-		"11211"
-    ];
+$servers = gethostbynamel( 'memcached' );
+foreach( $servers as $server ) {
+        $memcached_servers[] = [ $server, '11211' ];
 }
 unset( $server );
+unset( $servers );
 define( "WP_CACHE", true );
 
 // If we're behind a proxy server and using HTTPS, we need to alert Wordpress of that fact
@@ -176,6 +174,48 @@ EOPHP
 
 		if [ "$WORDPRESS_DEBUG" ]; then
 			set_config 'WP_DEBUG' 1 boolean
+		fi
+
+		if [ "$PLUGINS" ]; then
+		    IFS="," read -ra PLUGINS <<< $PLUGINS
+		    for i in "${PLUGINS[@]}"; do
+		        PLUGIN=${i%@*}
+		        VERSION=${i##*@}
+		        if [ "$VERSION" == "latest" ]; then
+		            VERSION=""
+		        fi
+
+		        if [ "$VERSION" == "$PLUGIN" ]; then
+		            VERSION=""
+		        fi
+
+		        if [ "$VERSION" ]; then
+		            VERSION="--version $VERSION"
+		        fi
+
+		        runuser -u www-data -g www-data -p wp plugin install $PLUGIN $VERSION
+		    done
+		fi
+
+		if [ "$THEMES" ]; then
+		    IFS="," read -ra THEMES <<< $THEMES
+		    for i in "${THEMES[@]}"; do
+		        THEME=${i%@*}
+		        VERSION=${i##*@}
+		        if [ "$VERSION" == "latest" ]; then
+		            VERSION=""
+		        fi
+
+		        if [ "$VERSION" == "$THEME" ]; then
+		            VERSION=""
+		        fi
+
+		        if [ "$VERSION" ]; then
+		            VERSION="--version $VERSION"
+		        fi
+
+		        runuser -u www-data -g www-data -p wp plugin install $PLUGIN $VERSION
+		    done
 		fi
 
 		TERM=dumb php -- <<'EOPHP'

@@ -14,10 +14,15 @@ RUN set -ex; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
 	docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr; \
-	docker-php-ext-install gd mysqli opcache \
+	docker-php-ext-install gd mysqli \
+	&& git clone https://github.com/igbinary/igbinary.git /usr/src/php/ext/igbinary \
+	&& cd /usr/src/php/ext/igbinary \
+	&& docker-php-ext-configure igbinary \
+	&& docker-php-ext-install igbinary \
+	&& docker-php-ext-install opcache \
 	&& git clone https://github.com/php-memcached-dev/php-memcached /usr/src/php/ext/memcached \
     && cd /usr/src/php/ext/memcached && git checkout -b php7 origin/php7 \
-    && docker-php-ext-configure memcached \
+    &&  docker-php-ext-configure memcached --enable-memcached-igbinary \
     && docker-php-ext-install memcached \
 	&& apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
@@ -38,12 +43,14 @@ RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli
     chmod +x wp-cli.phar && \
     mv wp-cli.phar /usr/local/bin/wp
 
-COPY wordpress-entrypoint.sh /usr/local/bin/
 ENV WORDPRESS_VERSION=4.7.3
 
 USER www-data
 
 RUN wp core download --version=$WORDPRESS_VERSION
+
+COPY wordpress-entrypoint.sh /usr/local/bin/
+COPY php.ini /usr/local/etc/php/php.ini
 
 COPY object-cache.php /var/www/html/wp-content/object-cache.php
 COPY advanced-cache.php /var/www/html/wp-content/advanced-cache.php

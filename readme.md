@@ -5,6 +5,8 @@ This is based on lots of information around the web:
 - https://github.com/christianc1/wordpress-memcached
 - https://github.com/colinmollenhour/mariadb-galera-swarm
 - https://raw.githubusercontent.com/docker-library/wordpress/master/php7.1/apache/docker-entrypoint.sh
+- https://github.com/php-memcached-dev/php-memcached/tree/master
+- https://github.com/igbinary/igbinary
 
 # How to use it
 
@@ -37,4 +39,17 @@ docker-compose scale wordpress=1
 
 ## Docker Swarm
 
-Coming soon!
+Basically:
+
+```sh
+docker stack deploy -c docker-compose.yml wordpress
+watch docker service ls
+# wait for seed to completely initialize
+docker service scale wordpress_node=2
+watch docker service ls
+# wait for node to completely initialize
+docker service scale wordpress_seed=0 wordpress_node=3
+watch docker service ls
+# wait for node to completely initialize
+docker service scale wordpress_wordpress=1
+```
