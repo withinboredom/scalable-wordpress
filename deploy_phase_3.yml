@@ -43,7 +43,7 @@ services:
     deploy:
       replicas: 2
   wordpress:
-    image: withinboredom/scalable-wordpress
+    image: withinboredom/scalable-wordpress:4.7.3-apache
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress
@@ -76,7 +76,7 @@ services:
         - "traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
         - "traefik.frontend.passHostHeader=true"
   traefik:
-    image: traefik
+    image: withinboredom/scalable-wordpress:traefik-camembert
     ports:
       - 80:80
       - 8000:8080
