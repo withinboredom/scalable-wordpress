@@ -444,7 +444,7 @@ ReadOnly = true
 #
 # Optional
 #
-# [docker]
+[docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
 #
@@ -457,19 +457,19 @@ ReadOnly = true
 #
 # Required
 #
-# domain = "docker.localhost"
+domain = "withinboredom.info"
 
 # Enable watch docker changes
 #
 # Optional
 #
-# watch = true
+watch = true
 
 # Use Docker Swarm Mode as data provider
 #
 # Optional
 #
-# swarmmode = true
+swarmmode = true
 
 # Override default configuration template. For advanced users :)
 #
