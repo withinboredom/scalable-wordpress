@@ -76,6 +76,17 @@
 #
 # defaultEntryPoints = ["http", "https"]
 
+defaultEntryPoints = [ "http", "https" ]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+    address = ":443"
+    [entryPoints.https.tls]
+
 # Constraints definition
 #
 # Optional
@@ -210,14 +221,6 @@ OnHostRule = true
 #   main = "local3.com"
 # [[acme.domains]]
 #   main = "local4.com"
-
-defaultEntryPoints = [ "http", "https" ]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-      entryPoint = "https"
 
 # Entrypoints definition
 #
