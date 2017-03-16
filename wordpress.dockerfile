@@ -8,6 +8,7 @@ RUN set -ex; \
 		libjpeg-dev \
 		libpng12-dev \
 		libmemcached-dev \
+		libmagickwand-6.q16-dev \
 		git \
 		less \
 	; \
@@ -24,7 +25,10 @@ RUN set -ex; \
     && cd /usr/src/php/ext/memcached && git checkout -b php7 origin/php7 \
     && docker-php-ext-configure memcached --enable-memcached-igbinary \
     && docker-php-ext-install memcached \
-	&& apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+    && ln -s /usr/lib/x86_64-linux-gnu/ImageMagick-6.8.9/bin-Q16/MagickWand-config /usr/bin \
+    && pecl install imagick \
+    && echo "extension=imagick.so" > /usr/local/etc/php/conf.d/ext-imagick.ini \
+    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
