@@ -270,6 +270,8 @@ EOPHP
 	for e in "${envs[@]}"; do
 		unset "$e"
 	done
+
+	runuser -u www-data -g www-data -p wp rewrite flush
 fi
 
 exec "$@"
