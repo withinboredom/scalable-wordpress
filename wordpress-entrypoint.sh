@@ -271,7 +271,7 @@ EOPHP
 		unset "$e"
 	done
 
-	runuser -u www-data -g www-data -p "wp rewrite flush --hard"
+	runuser -u www-data -g www-data -p -- wp rewrite flush --hard
 fi
 
 exec "$@"
