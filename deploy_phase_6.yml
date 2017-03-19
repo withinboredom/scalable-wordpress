@@ -1,47 +1,6 @@
 version: '3.1'
 
 services:
-  seed:
-    image: colinmollenhour/mariadb-galera-swarm:latest
-    environment:
-      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
-      - MYSQL_USER=wordpress
-      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
-      - MYSQL_DATABASE=wordpress
-      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
-      - NODE_ADDRESS=eth0
-    command: seed
-    volumes:
-      - mysql-data:/var/lib/mysql
-    secrets:
-      - xtrabackup_password
-      - mysql_password
-      - mysql_root_password
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-  node:
-    image: colinmollenhour/mariadb-galera-swarm:latest
-    environment:
-      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
-      - NODE_ADDRESS=eth0
-    command: node seed,node
-    deploy:
-      replicas: 0
-      update_config:
-        parallelism: 1
-        delay: 30s
-      restart_policy:
-        condition: on-failure
-    secrets:
-      - xtrabackup_password
-  memcached:
-    image: memcached
-    command: memcached -m 512m
-    deploy:
-      replicas: 2
   wordpress:
     image: withinboredom/scalable-wordpress:4.7.3-apache
     environment:
@@ -57,7 +16,8 @@ services:
       - WORDPRESS_SECURE_AUTH_SALT_FILE=/run/secrets/SECURE_AUTH_SALT
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
-      - PLUGINS=jetpack@latest,batcache@latest
+      - MEMCACHED_HOST=tasks.memcached
+      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless
     secrets:
       - mysql_password
       - AUTH_KEY
@@ -68,16 +28,28 @@ services:
       - SECURE_AUTH_SALT
       - LOGGED_IN_SALT
       - NONCE_SALT
+    healthcheck:
+      disable: false
     deploy:
-      replicas: 0
+      replicas: 2
       labels:
         - "traefik.port=80"
+        - "traefik.frontend.entryPoints=http,https"
+        - "traefik.frontend.rule=Host:server-0.withinboredom.info,withinboredom.info,www.withinboredom.info"
+        - "traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
+        - "traefik.frontend.passHostHeader=true"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        window: 60s
   traefik:
     image: withinboredom/scalable-wordpress:traefik-camembert
     ports:
       - 80:80
       - 8000:8080
-      - 443:433
+      - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --docker --docker.swarmmode --docker.watch --web
@@ -86,10 +58,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-
-volumes:
-  mysql-data:
-    driver: local
 
 secrets:
   xtrabackup_password:
@@ -114,3 +82,4 @@ secrets:
     file: .secrets/LOGGED_IN_SALT
   NONCE_SALT:
     file: .secrets/NONCE_SALT
+

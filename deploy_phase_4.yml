@@ -72,7 +72,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --docker --docker.swarmmode --docker.watch --web
     deploy:
-      replicas: 1
+      mode: global
       placement:
         constraints:
           - node.role == manager
