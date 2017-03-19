@@ -117,7 +117,8 @@ foreach( $servers as $server ) {
 unset( $server );
 unset( $servers );
 
-define( "WP_CACHE", true );
+if ( count( $servers ) )
+    define( "WP_CACHE", true );
 
 // disable auto-update
 define( 'WP_AUTO_UPDATE_CORE', false );
@@ -220,6 +221,12 @@ EOPHP
 		        fi
 
 		        runuser -u www-data -g www-data -p wp plugin install $PLUGIN $VERSION
+
+		        if [ "$?" != "0" ]; then
+		            exit 1
+		        fi
+
+		        runuser -u www-data -g www-data -p wp plugin activate $PLUGIN
 		    done
 		fi
 

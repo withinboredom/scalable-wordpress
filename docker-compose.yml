@@ -19,8 +19,6 @@ services:
       - mysql_root_password
   node:
     image: colinmollenhour/mariadb-galera-swarm
-    depends_on:
-      - seed
     environment:
       - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
       - NODE_ADDRESS=eth0
@@ -36,9 +34,6 @@ services:
       replicas: 1
   wordpress:
     image: withinboredom/scalable-wordpress
-    depends_on:
-      - node
-      - memcached
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress

@@ -1,3 +1,5 @@
+[![](https://images.microbadger.com/badges/image/withinboredom/scalable-wordpress.svg)](https://microbadger.com/images/withinboredom/scalable-wordpress "Get your own image badge on microbadger.com")
+
 # An Easy to Scale Vanilla WordPress
 
 Getting WordPress to scale in docker swarm mode is a fairly complex feat.
