@@ -199,7 +199,7 @@ EOPHP
 		            VERSION="--version $VERSION"
 		        fi
 
-		        runuser -u www-data -g www-data -p wp plugin install $PLUGIN $VERSION
+		        runuser -u www-data -g www-data -p -- wp plugin install $PLUGIN $VERSION --force --activate
 		    done
 		fi
 
@@ -220,13 +220,7 @@ EOPHP
 		            VERSION="--version $VERSION"
 		        fi
 
-		        runuser -u www-data -g www-data -p wp plugin install $PLUGIN $VERSION
-
-		        if [ "$?" != "0" ]; then
-		            exit 1
-		        fi
-
-		        runuser -u www-data -g www-data -p wp plugin activate $PLUGIN
+		        runuser -u www-data -g www-data -p -- wp theme install $THEME $VERSION --force --activate
 		    done
 		fi
 

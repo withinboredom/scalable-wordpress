@@ -33,7 +33,7 @@ services:
     deploy:
       replicas: 1
   wordpress:
-    image: withinboredom/scalable-wordpress
+    image: withinboredom/scalable-wordpress:latest
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress
@@ -48,7 +48,7 @@ services:
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
       - MEMCACHED_HOST=memcached
-      - PLUGINS=jetpack@4.7.1,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system
+      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless
     secrets:
       - mysql_password
       - AUTH_KEY
