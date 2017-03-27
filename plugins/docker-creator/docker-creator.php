@@ -36,7 +36,7 @@ class DockerDeployment {
 			] );
 		} );
 
-		
+
 	}
 
 	function BaseFile() {
@@ -79,7 +79,6 @@ FROM withinboredom/scalable-wordpress:$wpVersion-apache
 
 	function BuildAndPush( WP_REST_Request $params ) {
 		$key = wp_generate_password( 12, false, false );
-		set_transient( 'docker_' . $key, $params, DAY_IN_SECONDS );
 		$repo = $params->get_param( 'repo' );
 		//update_option( 'docker_' . $key, serialize( $params ) );
 		$client = new DockerClient( [
