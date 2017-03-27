@@ -183,7 +183,7 @@ EOPHP
 			set_config 'WP_DEBUG' 1 boolean
 		fi
 
-		if [ -f /var/run/docker.sock ]; then
+		if [ -e /var/run/docker.sock ]; then
 		    chmod o+rw /var/run/docker.sock
 		fi
 

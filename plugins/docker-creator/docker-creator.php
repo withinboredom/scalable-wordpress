@@ -119,6 +119,7 @@ function ExtendDockerFile( WP_REST_Request $params ) {
 function BuildDockerWP( WP_REST_Request $params ) {
 	$key = wp_generate_password( 12, false, false );
 	set_transient( 'docker_' . $key, $params, DAY_IN_SECONDS );
+	$repo = $params->get_param( 'repo' );
 	//update_option( 'docker_' . $key, serialize( $params ) );
 	$client = new DockerClient( [
 		'remote_socket' => 'unix:///var/run/docker.sock'
@@ -126,24 +127,47 @@ function BuildDockerWP( WP_REST_Request $params ) {
 
 	$docker = new Docker( $client );
 
+	$tar        = new PharData( ABSPATH . "/wp-content/$key.tar" );
+	$dockerfile = ExtendDockerFile( $params )['contents'];
+
+	$tar->addFromString( 'Dockerfile', $dockerfile );
+	unset( $tar );
+
 	$build = [
-		't'      => 'withinboredom/scalable-wordpress:' . $key,
-		'remote' => 'http://localhost/wp-json/docker/v1/Dockerfile?key=' . $key,
-		'pull'   => true
+		'dockerfile' => 'Dockerfile',
+		't'          => "$repo:$key",
+		'pull'       => true
 	];
 
-	$tarball = __DIR__ . '/empty.tar';
-	var_dump( $tarball );
-	//$tarball = file_get_contents( $tarball );
+	$tar     = ABSPATH . "/wp-content/$key.tar";
+	$tarball = file_get_contents( $tar );
+	unlink( $tar );
 
 	try {
 		$results = $docker->getImageManager()->build( $tarball, $build );
-		$output  = [];
+		unset( $tarball );
+		$output = [];
 		foreach ( $results as $result ) {
 			$output[] = $result->getStream();
 		}
 
-		return $output;
+		$results = $docker->getImageManager()->push( "$repo:$key", [
+			'X-Registry-Auth' => base64_encode( json_encode( [
+				'username' => $params->get_param( 'username' ),
+				'password' => $params->get_param( 'password' ),
+				'email'    => $params->get_param( 'email' )
+			] ) )
+		] );
+		foreach ( $results as $result ) {
+			$output[] = $result->getProgress() . ' :: ' . $result->getStatus();
+		}
+
+		
+
+		return [
+			'output' => $output,
+			'image'  => "$repo:$key"
+		];
 	} catch ( Exception $exception ) {
 		return [
 			$exception->getMessage(),
