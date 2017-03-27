@@ -1,0 +1,13 @@
+{
+    "name": "withinboredom/docker-creator",
+    "type": "project",
+    "require": {
+        "docker-php/docker-php": "^1.24"
+    },
+    "authors": [
+        {
+            "name": "Rob Landers",
+            "email": "landers.robert@gmail.com"
+        }
+    ]
+}
