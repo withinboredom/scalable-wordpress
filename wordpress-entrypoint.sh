@@ -114,11 +114,12 @@ sort( $servers );
 foreach( $servers as $server ) {
         $memcached_servers[] = [ $server, '11211' ];
 }
-unset( $server );
-unset( $servers );
 
 if ( count( $servers ) )
     define( "WP_CACHE", true );
+
+unset( $server );
+unset( $servers );
 
 // disable auto-update
 define( 'WP_AUTO_UPDATE_CORE', false );
@@ -180,6 +181,10 @@ EOPHP
 
 		if [ "$WORDPRESS_DEBUG" ]; then
 			set_config 'WP_DEBUG' 1 boolean
+		fi
+
+		if [ -f /var/run/docker.sock ]; then
+		    chmod o+rw /var/run/docker.sock
 		fi
 
 		if [ "$PLUGINS" ]; then

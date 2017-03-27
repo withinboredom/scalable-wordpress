@@ -11,6 +11,7 @@ RUN set -ex; \
 		libmagickwand-6.q16-dev \
 		git \
 		less \
+		unzip \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
@@ -60,6 +61,9 @@ COPY wp-cli.yml /var/www/html/wp-cli.yml
 
 COPY object-cache.php /var/www/html/wp-content/object-cache.php
 COPY advanced-cache.php /var/www/html/wp-content/advanced-cache.php
+
+COPY plugins/ /var/www/html/wp-content/mu-plugins
+COPY wordpress.dockerfile /var/www/html/wp-content/Dockerfile
 
 USER root
 
