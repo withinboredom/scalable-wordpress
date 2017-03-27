@@ -33,7 +33,11 @@ services:
     deploy:
       replicas: 1
   wordpress:
-    image: withinboredom/scalable-wordpress:latest
+    image: withinboredom/scalable-wordpress:test
+    volumes:
+      - ./plugins:/var/www/html/wp-content/mu-plugins
+      - ./wordpress.dockerfile:/var/www/html/wp-content/Dockerfile
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - WORDPRESS_DB_HOST=node
       - WORDPRESS_DB_NAME=wordpress
@@ -48,7 +52,7 @@ services:
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
       - MEMCACHED_HOST=memcached
-      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless
+      - PLUGINS=jetpack@latest
     secrets:
       - mysql_password
       - AUTH_KEY
