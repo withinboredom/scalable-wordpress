@@ -21,6 +21,22 @@ use Docker\DockerClient;
 
 class DockerDeployment {
 	function __construct() {
+		add_action( 'rest_api_init', function () {
+			register_rest_route( 'docker/v1', 'file', [
+				'methods'  => 'GET',
+				'callback' => [ $this, 'BaseFile' ]
+			] );
+			register_rest_route( 'docker/v1', 'file', [
+				'methods'  => 'POST',
+				'callback' => [ $this, 'Extend' ]
+			] );
+			register_rest_route( 'docker/v1', 'build', [
+				'methods'  => 'POST',
+				'callback' => [ $this, 'BuildAndPush' ]
+			] );
+		} );
+
+		
 	}
 
 	function BaseFile() {
@@ -174,18 +190,3 @@ Expects json of the form:
 */
 
 $GLOBALS['DOCKER'] = new DockerDeployment();
-
-add_action( 'rest_api_init', function () {
-	register_rest_route( 'docker/v1', 'file', [
-		'methods'  => 'GET',
-		'callback' => [ $GLOBALS['DOCKER'], 'BaseFile' ]
-	] );
-	register_rest_route( 'docker/v1', 'file', [
-		'methods'  => 'POST',
-		'callback' => [ $GLOBALS['DOCKER'], 'Extend' ]
-	] );
-	register_rest_route( 'docker/v1', 'build', [
-		'methods'  => 'POST',
-		'callback' => [ $GLOBALS['DOCKER'], 'BuildAndPush' ]
-	] );
-} );
