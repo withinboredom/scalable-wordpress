@@ -33,7 +33,7 @@ services:
     deploy:
       replicas: 1
   wordpress:
-    image: withinboredom/scalable-wordpress:test
+    image: withinboredom/scalable-wordpress:latest
     volumes:
       - ./plugins:/var/www/html/wp-content/mu-plugins
       - ./wordpress.dockerfile:/var/www/html/wp-content/Dockerfile
