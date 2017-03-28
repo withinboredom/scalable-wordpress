@@ -164,11 +164,9 @@ EOPHP
 
 		for unique in "${uniqueEnvs[@]}"; do
 			uniqVar="WORDPRESS_$unique"
-			echo "Checking $unique = ${!uniqVar}"
 			if [ -n "${!uniqVar}" ]; then
 				set_config "$unique" "${!uniqVar}"
 			else
-			    echo "Setting random string"
 				# if not specified, let's generate a random value
 				currentVal="$(sed -rn -e "s/define\((([\'\"])$unique\2\s*,\s*)(['\"])(.*)\3\);/\4/p" wp-config.php)"
 				if [ "$currentVal" = 'put your unique phrase here' ]; then
