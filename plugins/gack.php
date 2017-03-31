@@ -18,7 +18,6 @@ if (_gaq) {
 
 window.readCount = 0;
 setInterval(function() {
-	console.log(document.hasFocus());
 	if (document.hasFocus()) {
         _gaq.push(['_trackEvent', 'article', 'reading', 'in-progress', window.readCount++]);
     }
@@ -33,7 +32,6 @@ setInterval(function() {
 
 inView('.sharedaddy').once('enter', function() {
 	_gaq.push(['_trackEvent', 'article', 'read', 'finished', 1]);
-	console.log('finished');
 });
 }
 
