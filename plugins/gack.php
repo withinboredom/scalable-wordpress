@@ -12,7 +12,8 @@ Text Domain: gack
 Domain Path: /languages
 */
 
-wp_enqueue_script( 'gack', "<script>
+add_action( 'wp_enqueue_scripts', function () {
+	wp_enqueue_script( 'gack', "<script>
 
 if (_gaq) {
 
@@ -36,3 +37,4 @@ inView('.sharedaddy').once('enter', function() {
 }
 
 </script>", [], false, true );
+} );
