@@ -1,5 +1,7 @@
 if (_gaq) {
 
+	_gaq.push(['_trackEvent', 'article', 'loaded', 'server-response', performance.timing.responseStart - performance.timing.connectStart, true]);
+
 	window.readCount = 0;
 	setInterval(function() {
 		if (document.hasFocus()) {
