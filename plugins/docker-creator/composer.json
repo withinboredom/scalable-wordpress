@@ -2,7 +2,7 @@
     "name": "withinboredom/docker-creator",
     "type": "project",
     "require": {
-        "docker-php/docker-php": "^1.24"
+        "docker-php/docker-php": "^1.24@dev"
     },
     "authors": [
         {

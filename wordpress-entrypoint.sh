@@ -110,13 +110,15 @@ if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
 global $memcached_servers;
 $memcached_servers = [];
 $servers = gethostbynamel( getenv( 'MEMCACHED_HOST' ) );
-sort( $servers );
-foreach( $servers as $server ) {
-        $memcached_servers[] = [ $server, '11211' ];
-}
 
-if ( count( $servers ) )
+if ( count( $servers ) ) {
+    sort( $servers );
+    foreach( $servers as $server ) {
+            $memcached_servers[] = [ $server, '11211' ];
+    }
+
     define( "WP_CACHE", true );
+}
 
 unset( $server );
 unset( $servers );
@@ -279,5 +281,8 @@ EOPHP
 
 	runuser -u www-data -g www-data -p -- wp rewrite flush --hard
 fi
+
+chown -R nobody wp-content
+chown www-data wp-content
 
 exec "$@"

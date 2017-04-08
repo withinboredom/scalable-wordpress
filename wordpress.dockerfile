@@ -53,6 +53,7 @@ ENV WORDPRESS_VERSION=4.7.3
 USER www-data
 
 RUN wp core download --version=$WORDPRESS_VERSION
+#COPY .wordpress /var/www/html
 
 COPY wordpress-entrypoint.sh /usr/local/bin/
 COPY healthcheck.sh /usr/local/bin/

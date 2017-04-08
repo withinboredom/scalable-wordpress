@@ -67,6 +67,14 @@ services:
       - 80:80
     deploy:
       replicas: 0
+    networks:
+      default:
+        aliases:
+          - master
+  phpsysinfo:
+    image: withinboredom/phpsysinfo
+    ports:
+      - 8000:80
 
 volumes:
   mysql-data:

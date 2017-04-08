@@ -35,8 +35,6 @@ class DockerDeployment {
 				'callback' => [ $this, 'BuildAndPush' ]
 			] );
 		} );
-
-
 	}
 
 	function BaseFile() {
