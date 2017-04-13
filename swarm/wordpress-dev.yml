@@ -1,0 +1,48 @@
+version: '3.1'
+
+services:
+  wordpress:
+    image: withinboredom/scalable-wordpress:4.7.3-apache
+    environment:
+      - WORDPRESS_DB_HOST=node
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/mysql_password
+      - WORDPRESS_AUTH_KEY_FILE=/run/secrets/AUTH_KEY
+      - WORDPRESS_SECURE_AUTH_KEY_FILE=/run/secrets/SECURE_AUTH_KEY
+      - WORDPRESS_LOGGED_IN_KEY_FILE=/run/secrets/LOGGED_IN_KEY
+      - WORDPRESS_NONCE_KEY_FILE=/run/secrets/NONCE_KEY
+      - WORDPRESS_AUTH_SALT_FILE=/run/secrets/AUTH_SALT
+      - WORDPRESS_SECURE_AUTH_SALT_FILE=/run/secrets/SECURE_AUTH_SALT
+      - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
+      - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
+      - MEMCACHED_HOST=tasks.memcached
+      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless
+    secrets:
+      - mysql_password
+      - AUTH_KEY
+      - SECURE_AUTH_KEY
+      - LOGGED_IN_KEY
+      - NONCE_KEY
+      - AUTH_SALT
+      - SECURE_AUTH_SALT
+      - LOGGED_IN_SALT
+      - NONCE_SALT
+    volumes:
+      - ./plugins:/var/www/html/wp-content/mu-plugins
+      - ./wordpress.dockerfile:/var/www/html/wp-content/Dockerfile
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.port=80"
+        - "traefik.frontend.entryPoints=http,https"
+        - "traefik.frontend.rule=Host:server-0.withinboredom.info,withinboredom.info,www.withinboredom.info"
+        - "traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
+        - "traefik.frontend.passHostHeader=true"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        window: 60s

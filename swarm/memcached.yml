@@ -1,0 +1,8 @@
+version: '3.1'
+
+services:
+  memcached:
+    image: memcached
+    command: memcached -m 512m
+    deploy:
+      replicas: 2

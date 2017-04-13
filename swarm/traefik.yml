@@ -1,0 +1,17 @@
+version: '3.1'
+
+services:
+  traefik:
+    image: withinboredom/scalable-wordpress:traefik-camembert
+    ports:
+      - 80:80
+      - 8000:8080
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --docker --docker.swarmmode --docker.watch --web
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager

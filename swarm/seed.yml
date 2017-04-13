@@ -1,0 +1,27 @@
+version: '3.1'
+
+services:
+  seed:
+    image: colinmollenhour/mariadb-galera-swarm:latest
+    environment:
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - NODE_ADDRESS=eth0
+    command: seed
+    volumes:
+      - mysql-data:/var/lib/mysql
+    secrets:
+      - xtrabackup_password
+      - mysql_password
+      - mysql_root_password
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+volumes:
+  mysql-data:
+    driver: local

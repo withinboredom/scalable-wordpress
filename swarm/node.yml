@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  node:
+    image: colinmollenhour/mariadb-galera-swarm:latest
+    environment:
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+      - NODE_ADDRESS=eth0
+    command: node seed,node
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: on-failure
+    secrets:
+      - xtrabackup_password
