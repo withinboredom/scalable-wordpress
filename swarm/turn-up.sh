@@ -98,3 +98,6 @@ deploy "master"
 deploy "wordpress"
 
 deploy "traefik"
+
+docker service update $(nameMe 'traefik') --publish-rm 443
+docker service update $(nameMe 'traefik') --publish-add mode=host,target=443,published=443,protocol=tcp

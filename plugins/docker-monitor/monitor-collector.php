@@ -26,11 +26,11 @@ class DockerCollector {
 		$this->docker = new Docker( $client );
 
 		add_action( 'rest_api_init', function () {
-			register_rest_route( 'docker/v1', 'monitor', [
+			register_rest_route( 'monitor/v1', '/monitor', [
 				'methods'   => 'POST',
 				'callbacks' => [ $this, 'collect' ]
 			] );
-			register_rest_route( 'docker/v1', 'swarm', [
+			register_rest_route( 'monitor/v1', '/swarm', [
 				'methods'  => 'GET',
 				'callback' => [ $this, 'isSwarm' ]
 			] );
@@ -46,10 +46,13 @@ class DockerCollector {
 	/**
 	 * Determines if the current docker client is a swarm master
 	 */
-	function isSwarm() {
-		// todo: determine if request came from container
+	function isSwarm( WP_REST_Request $data ) {
+		if ( ! $this->requestFromContainer() ) {
+			die();
+		}
+
 		try {
-			$result = $this->docker->getServiceManager()->findAll();
+			$result = $this->docker->getServiceManager()->findAll( [], null );
 
 			return true;
 		} catch ( Exception $exception ) {
@@ -57,8 +60,32 @@ class DockerCollector {
 		}
 	}
 
+	function cidr_match( $ip, $cidr ) {
+		list( $subnet, $mask ) = explode( '/', $cidr );
+
+		if ( ( ip2long( $ip ) & ~( ( 1 << ( 32 - $mask ) ) - 1 ) ) == ip2long( $subnet ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private function requestFromContainer() {
-		return true;
+		$remoteIp = $_SERVER['HTTP_X_FORWARDED_FOR'];
+
+		if ( $this->cidr_match( $remoteIp, '10.0.0.0/8' ) ) {
+			return true;
+		}
+
+		if ( $this->cidr_match( $remoteIp, '172.16.0.0/12' ) ) {
+			return true;
+		}
+
+		if ( $this->cidr_match( $remoteIp, '192.168.0.0/16' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private function getContainerFromService( $service ) {

@@ -31,6 +31,7 @@ class ServiceResource extends Resource
         $response = $this->httpClient->sendRequest($request);
         if (self::FETCH_OBJECT == $fetch) {
             if ('200' == $response->getStatusCode()) {
+            	die($response->getBody());
                 return $this->serializer->deserialize((string) $response->getBody(), 'Docker\\API\\Model\\Service[]', 'json');
             }
         }
