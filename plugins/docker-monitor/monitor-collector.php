@@ -37,25 +37,39 @@ class DockerCollector {
 		} );
 
 		add_action( 'docker_monitor_update', [ $this, 'update' ] );
+		add_filter( 'cron_schedules', function ( $schedules ) {
+			$schedules['every_second'] = [
+				'interval' => 1,
+				'display'  => __( 'Every Second', 'textdomain' )
+			];
+
+			return $schedules;
+		} );
 
 		if ( ! wp_get_schedule( 'docker_monitor_update' ) ) {
-
+			wp_schedule_event( time(), 'every_second', 'docker_monitor_update' );
 		}
 	}
 
 	/**
 	 * Determines if the current docker client is a swarm master
 	 */
-	function isSwarm( WP_REST_Request $data ) {
+	function isSwarm() {
 		if ( ! $this->requestFromContainer() ) {
 			die();
 		}
 
+		$client = new WP_Http_Streams();
+		var_dump($client->request('unix:///var/run/docker.sock/version'));
+
 		try {
 			$result = $this->docker->getServiceManager()->findAll( [], null );
+			update_option( 'isDockerSwarm', true );
 
 			return true;
 		} catch ( Exception $exception ) {
+			update_option( 'isDockerSwarm', false );
+
 			return false;
 		}
 	}
@@ -97,7 +111,8 @@ class DockerCollector {
 	}
 
 	function update() {
-
+		$target = $this->docker->getTaskManager()->findAll();
+		update_option( 'tasks', $target );
 	}
 }
 

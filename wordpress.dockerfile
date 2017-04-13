@@ -16,7 +16,7 @@ RUN set -ex; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
 	docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr; \
-	docker-php-ext-install gd mysqli \
+	docker-php-ext-install gd mysqli sockets \
 	&& git clone https://github.com/igbinary/igbinary.git /usr/src/php/ext/igbinary \
 	&& cd /usr/src/php/ext/igbinary \
 	&& docker-php-ext-configure igbinary \
