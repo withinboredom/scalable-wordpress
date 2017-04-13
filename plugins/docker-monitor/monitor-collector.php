@@ -59,8 +59,8 @@ class DockerCollector {
 			die();
 		}
 
-		$client = new WP_Http_Streams();
-		var_dump($client->request('unix:///var/run/docker.sock/version'));
+		//$client = new WP_Http_Streams();
+		//var_dump($client->request('unix:///var/run/docker.sock/version'));
 
 		try {
 			$result = $this->docker->getServiceManager()->findAll( [], null );
@@ -85,6 +85,7 @@ class DockerCollector {
 	}
 
 	private function requestFromContainer() {
+		//todo: or remote ip -- raw
 		$remoteIp = $_SERVER['HTTP_X_FORWARDED_FOR'];
 
 		if ( $this->cidr_match( $remoteIp, '10.0.0.0/8' ) ) {
