@@ -24,19 +24,21 @@ class DockerCollector {
 		] );
 
 		$this->docker = new Docker( $client );
+		add_action( 'docker_monitor_update', [ $this, 'update' ] );
+		add_filter( 'cron_schedules', function ( $schedules ) {
+			$schedules['every_second'] = [
+				'interval' => 10,
+				'display'  => __( 'Every Second', 'textdomain' )
+			];
+
+			return $schedules;
+		} );
 
 		add_action( 'init', function () {
-			add_action( 'docker_monitor_update', [ $this, 'update' ] );
-			add_filter( 'cron_schedules', function ( $schedules ) {
-				$schedules['every_second'] = [
-					'interval' => 10,
-					'display'  => __( 'Every Second', 'textdomain' )
-				];
+			//var_dump( wp_get_schedule( 'docker_monitor_update' ) );
+			//die();
 
-				return $schedules;
-			} );
-
-			if ( ! wp_get_schedule( 'docker_monitor_update' ) ) {
+			if ( wp_get_schedule( 'docker_monitor_update' ) === false ) {
 				wp_schedule_event( time(), 'every_second', 'docker_monitor_update' );
 			}
 
@@ -50,7 +52,7 @@ class DockerCollector {
 
 		add_action( 'rest_api_init', function () {
 			register_rest_route( 'monitor/v1', '/monitor', [
-				'methods'   => 'POST',
+				'methods'   => 'GET',
 				'callbacks' => [ $this, 'collect' ]
 			] );
 			register_rest_route( 'monitor/v1', '/swarm', [
@@ -278,12 +280,16 @@ class DockerCollector {
 		return false;
 	}
 
-	function collect( WP_REST_Request $data ) {
+	function collect() {
 		// todo: determine if request came from container
+		return true;
 	}
 
+	/**
+	 * Called on a schedule to auto-update stats
+	 */
 	function update() {
-
+		wp_remote_get( 'http://master/wp-json/docker/v1/monitor' );
 	}
 }
 

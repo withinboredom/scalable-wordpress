@@ -17,7 +17,7 @@ services:
       - WORDPRESS_LOGGED_IN_SALT_FILE=/run/secrets/LOGGED_IN_SALT
       - WORDPRESS_NONCE_SALT_FILE=/run/secrets/NONCE_SALT
       - MEMCACHED_HOST=tasks.memcached
-      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless
+      - PLUGINS=jetpack@latest,batcache@latest,wp-maintenance-mode@latest,cookie-notice,disqus-comment-system,vaultpress,wp-code-highlightjs,wp-stateless,advanced-cron-manager
     secrets:
       - mysql_password
       - AUTH_KEY
