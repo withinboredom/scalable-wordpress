@@ -333,6 +333,9 @@ if ( in_array(
 	) ) )
 	return;
 
+// Never batcache master requests
+if (strpos($_SERVER['SERVER_NAME'], 'master') !== false) return;
+
 // Never batcache WP javascript generators
 if ( strstr( $_SERVER['SCRIPT_FILENAME'], 'wp-includes/js' ) )
 	return;

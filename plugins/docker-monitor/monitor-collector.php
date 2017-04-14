@@ -27,7 +27,7 @@ class DockerCollector {
 		add_action( 'docker_monitor_update', [ $this, 'update' ] );
 		add_filter( 'cron_schedules', function ( $schedules ) {
 			$schedules['every_second'] = [
-				'interval' => 10,
+				'interval' => 5,
 				'display'  => __( 'Every Second', 'textdomain' )
 			];
 
@@ -51,9 +51,9 @@ class DockerCollector {
 		} );
 
 		add_action( 'rest_api_init', function () {
-			register_rest_route( 'monitor/v1', '/monitor', [
-				'methods'   => 'GET',
-				'callbacks' => [ $this, 'collect' ]
+			register_rest_route( 'monitor/v1', '/collect', [
+				'methods'  => 'GET',
+				'callback' => [ $this, 'collect' ]
 			] );
 			register_rest_route( 'monitor/v1', '/swarm', [
 				'methods'  => 'GET',
@@ -193,33 +193,40 @@ class DockerCollector {
 
 	function recordMetrics() {
 		if ( ! $this->isSwarm() ) {
-			return false;
+			return new WP_Error( 500, 'not a swarm' );
 		}
 
-		$nodes = $this->findContainerWithClassByNode( 'phpsysinfo' );
+		$nodes = get_transient( 'nodes' );
+		if ( empty( $nodes ) ) {
+			$nodes = $this->findContainerWithClassByNode( 'phpsysinfo' );
+			set_transient( 'nodes', $nodes, 60 );
+		}
+
+		$post    = [
+			'post_author'    => 0,
+			'post_title'     => time(),
+			'post_status'    => 'published',
+			'post_type'      => 'metric',
+			'comment_status' => 'closed',
+			'ping_status'    => 'closed',
+			'meta_input'     => []
+		];
+
 		foreach ( $nodes as $node => $ips ) {
 			foreach ( $ips as $ip ) {
 				$ip = explode( '/', $ip )[0];
 
 				$metrics = $this->requestMetrics( $ip );
-				$post    = [
-					'post_author'    => 0,
-					'post_title'     => $node,
-					'post_status'    => 'published',
-					'post_type'      => 'metric',
-					'comment_status' => 'closed',
-					'ping_status'    => 'closed',
-					'meta_input'     => [
-						'vitals'     => $metrics['Vitals']['@attributes'],
-						'hardware'   => $metrics['Hardware']['CPU']['CpuCore'],
-						'memory'     => $metrics['Memory'],
-						'filesystem' => $metrics['Filesystem']['Mount']
-					]
+				$post['meta_input'][$node] = [
+					'vitals'     => $metrics['Vitals']['@attributes'],
+					'hardware'   => $metrics['Hardware']['CPU']['CpuCore'],
+					'memory'     => $metrics['Memory'],
+					'filesystem' => $metrics['FileSystem']['Mount']
 				];
-
-				wp_insert_post( $post );
 			}
 		}
+
+		wp_insert_post( $post );
 
 		return true;
 	}
@@ -281,15 +288,23 @@ class DockerCollector {
 	}
 
 	function collect() {
-		// todo: determine if request came from container
-		return true;
+		if ( ! $this->requestFromContainer() ) {
+			return new WP_Error( 500, 'not a container' );
+		}
+
+		return $this->recordMetrics();
 	}
 
 	/**
 	 * Called on a schedule to auto-update stats
 	 */
 	function update() {
-		wp_remote_get( 'http://master/wp-json/docker/v1/monitor' );
+		wp_remote_get( 'http://master/wp-json/monitor/v1/collect', [
+			'headers' => [
+				'httpversion' => '1.0',
+				'blocking'    => true
+			]
+		] );
 	}
 }
 
