@@ -202,7 +202,7 @@ class DockerCollector {
 			set_transient( 'nodes', $nodes, 60 );
 		}
 
-		$post    = [
+		$post = [
 			'post_author'    => 0,
 			'post_title'     => time(),
 			'post_status'    => 'published',
@@ -212,16 +212,23 @@ class DockerCollector {
 			'meta_input'     => []
 		];
 
+		$tasks = $this->get( '/tasks' );
+
 		foreach ( $nodes as $node => $ips ) {
+			$docker = $this->get( "/nodes/$node" );
 			foreach ( $ips as $ip ) {
 				$ip = explode( '/', $ip )[0];
 
-				$metrics = $this->requestMetrics( $ip );
-				$post['meta_input'][$node] = [
+				$metrics                     = $this->requestMetrics( $ip );
+				$post['meta_input'][ $node ] = [
 					'vitals'     => $metrics['Vitals']['@attributes'],
 					'hardware'   => $metrics['Hardware']['CPU']['CpuCore'],
 					'memory'     => $metrics['Memory'],
-					'filesystem' => $metrics['FileSystem']['Mount']
+					'filesystem' => $metrics['FileSystem']['Mount'],
+					'docker'     => $docker,
+					'tasks'      => array_filter( $tasks, function ( $task ) use ( $node ) {
+						return $task->NodeID == $node;
+					} ),
 				];
 			}
 		}

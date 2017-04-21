@@ -128,6 +128,22 @@ function cluster_manager() {
 							CPU Load: <?= $data['vitals']['LoadAvg'] ?>
 						</span>
 					</div>
+					<div class="bar_stat">
+						<span class="bar_fill" style="width: <?= $data['memory']['@attributes']['Percent'] ?>%"></span>
+						<span class="bar_label">
+							App: <?= $data['memory']['Details']['@attributes']['AppPercent'] ?>%,
+							Buffers: <?= $data['memory']['Details']['@attributes']['BuffersPercent'] ?>%,
+							Cached: <?= $data['memory']['Details']['@attributes']['CachedPercent'] ?>%
+						</span>
+					</div>
+					<?php foreach ( $data['filesystem'] as $mountpoint ): ?>
+						<div class="bar_stat">
+							<span class="bar_fill" style="width: <?= $mountpoint['@attributes']['Percent'] ?>%"></span>
+							<span class="bar_label">
+								Mounted: <?= $mountpoint['@attributes']['MountPoint'] ?>, <?= $mountpoint['@attributes']['Percent'] ?>% Used
+							</span>
+						</div>
+					<?php endforeach; ?>
 				</div>
 			</div>
 		<?php endforeach; ?>
