@@ -2,6 +2,10 @@
 
 namespace=$1
 
+if [ "$namespace" == "" ]; then
+    namespace="blog"
+fi
+
 function running() {
     echo $(docker service ls --filter name="$1" | tr -s ' ' | cut -d ' ' -f 4 | tail -n 1 | cut -d '/' -f 1)
 }
