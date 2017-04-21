@@ -16,7 +16,6 @@ COPY object-cache.php /var/www/html/wp-content/object-cache.php
 COPY advanced-cache.php /var/www/html/wp-content/advanced-cache.php
 
 COPY plugins/ /var/www/html/wp-content/mu-plugins
-COPY wordpress.dockerfile /var/www/html/wp-content/Dockerfile
 
 USER root
 
