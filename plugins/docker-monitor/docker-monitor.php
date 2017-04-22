@@ -38,10 +38,41 @@ function cluster_manager() {
 			$meta[ $node ] = unserialize( $datum );
 		}
 	}
+	$meta["$node-2"] = $meta[ $node ];
+	$meta["$node-3"] = $meta[ $node ];
+
+	$cluster_cpu_allocation = [
+		'reserved' => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['ReservedCPU'] + $carry;
+		}, 0 ),
+		'max'      => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['LimitsCPU'] + $carry;
+		}, 0 ),
+		'total'    => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['NanoCPU'] + $carry;
+		}, 0 )
+	];
+
+	$cluster_mem_allocation = [
+		'reserved' => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['ReservedMem'] + $carry;
+		}, 0 ),
+		'max'      => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['LimitsMem'] + $carry;
+		}, 0 ),
+		'total'    => array_reduce( $meta, function ( $carry, $data ) {
+			return $data['Docker']['MemoryBytes'] + $carry;
+		}, 0 )
+	];
+
 	?>
 	<style>
 		.nodes {
-			width: 50%;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			align-items: flex-start;
+			align-content: space-around;
 			margin-top: 20px;
 		}
 
@@ -110,11 +141,53 @@ function cluster_manager() {
 			padding: .5em;
 		}
 	</style>
-	<div class="metric_count">Current number of metric points: <?= wp_count_posts( 'metric' )->published ?></div>
+	<div class="metric_count">
+		<div class="node">
+			<div class="node_header">Cluster Overview</div>
+			<div class="node_body">
+				<div class="text_stat">
+					<div class="stat_label">Total Metric Data Points:</div>
+					<div class="stat_stat"><?= wp_count_posts( 'metric' )->published ?></div>
+				</div>
+				<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $cluster_cpu_allocation['max'] / $cluster_cpu_allocation['total'] * 100, 2 ) ?>%"></span>
+					<span class="bar_label">
+						Maximum Cluster CPU Utilization: <?= round( $cluster_cpu_allocation['max'] / $cluster_cpu_allocation['total'] * 100, 2 ) ?>
+						%
+					</span>
+				</div>
+				<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $cluster_cpu_allocation['reserved'] / $cluster_cpu_allocation['total'] * 100, 2 ) ?>%"></span>
+					<span class="bar_label">
+						Reserved Cluster CPU Utilization: <?= round( $cluster_cpu_allocation['reserved'] / $cluster_cpu_allocation['total'] * 100, 2 ) ?>
+						%
+					</span>
+				</div>
+				<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $cluster_mem_allocation['max'] / $cluster_mem_allocation['total'] * 100, 2 ) ?>%"></span>
+					<span class="bar_label">
+						Maximum Cluster Memory Utilization: <?= round( $cluster_mem_allocation['max'] / $cluster_mem_allocation['total'] * 100, 2 ) ?>
+						%
+					</span>
+				</div>
+				<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $cluster_mem_allocation['reserved'] / $cluster_mem_allocation['total'] * 100, 2 ) ?>%"></span>
+					<span class="bar_label">
+						Reserved Cluster Memory Utilization: <?= round( $cluster_mem_allocation['reserved'] / $cluster_mem_allocation['total'] * 100, 2 ) ?>
+						%
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="nodes">
 		<?php foreach ( $meta as $node => $data ): ?>
 			<div class="node">
-				<div class="node_header"><?= $node ?></div>
+				<div class="node_header"><?= $node ?> <?= $data['Docker']['Role'] ? " - " . $data['Docker']['Role'] : "" ?></div>
 				<div class="node_body">
 					<div class="text_stat">
 						<div class="stat_label">Uptime:</div>
@@ -129,26 +202,50 @@ function cluster_manager() {
 						</span>
 					</div>
 					<div class="bar_stat">
-						<span class="bar_fill" style="width: <?= $data['Memory'][''] ?>%"></span>
+			<span class="bar_fill"
+			      style="width: <?= round( $data['Memory']['Used'] / $data['Memory']['Total'] * 100 ) ?>%"></span>
 						<span class="bar_label">
-							App: <?= $data['Memory'] ?>%,
-							Buffers: <?= $data['memory']['Details']['@attributes']['BuffersPercent'] ?>%,
-							Cached: <?= $data['memory']['Details']['@attributes']['CachedPercent'] ?>%
+							App: <?= round( $data['Memory']['App'] / $data['Memory']['Total'], 2 ) ?>%,
+							Buffers: <?= round( $data['Memory']['Buffers'] / $data['Memory']['Total'], 2 ) ?>%,
+							Cached: <?= round( $data['Memory']['Cache'] / $data['Memory']['Total'], 2 ) ?>%
 						</span>
 					</div>
-					<?php foreach ( $data['filesystem'] as $mountpoint ): ?>
-						<div class="bar_stat">
-							<span class="bar_fill" style="width: <?= $mountpoint['@attributes']['Percent'] ?>%"></span>
-							<span class="bar_label">
-								Mounted: <?= $mountpoint['@attributes']['MountPoint'] ?>, <?= $mountpoint['@attributes']['Percent'] ?>% Used
-							</span>
-						</div>
-					<?php endforeach; ?>
+					<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $data['Docker']['LimitsCPU'] / $data['Docker']['NanoCPU'] * 100 ) ?>%"></span>
+						<span class="bar_label">
+						Maximum CPU Utilization: <?= round( $data['Docker']['LimitsCPU'] / $data['Docker']['NanoCPU'] * 100, 2 ) ?>
+							%
+					</span>
+					</div>
+					<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $data['Docker']['ReservedCPU'] / $data['Docker']['NanoCPU'] * 100 ) ?>%"></span>
+						<span class="bar_label">
+						Reserved CPU Utilization: <?= round( $data['Docker']['ReservedCPU'] / $data['Docker']['NanoCPU'] * 100, 2 ) ?>
+							%
+					</span>
+					</div>
+					<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $data['Docker']['LimitsMem'] / $data['Docker']['MemoryBytes'] * 100 ) ?>%"></span>
+						<span class="bar_label">
+						Maximum Memory Utilization: <?= round( $data['Docker']['LimitsMem'] / $data['Docker']['MemoryBytes'] * 100, 2 ) ?>
+							%
+					</span>
+					</div>
+					<div class="bar_stat">
+					<span class="bar_fill"
+					      style="width: <?= round( $data['Docker']['ReservedMem'] / $data['Docker']['MemoryBytes'] * 100 ) ?>%"></span>
+						<span class="bar_label">
+						Reserved Memory Utilization: <?= round( $data['Docker']['ReservedMem'] / $data['Docker']['MemoryBytes'] * 100, 2 ) ?>
+							%
+					</span>
+					</div>
 				</div>
 			</div>
 		<?php endforeach; ?>
 	</div>
-	<pre><?php var_dump( $meta ); ?></pre>
 	<?php
 }
 
