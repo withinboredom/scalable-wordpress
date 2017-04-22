@@ -118,20 +118,20 @@ function cluster_manager() {
 				<div class="node_body">
 					<div class="text_stat">
 						<div class="stat_label">Uptime:</div>
-						<div class="stat_stat"><?= secondsToTime( (int) $data['vitals']['Uptime'] ) ?></div>
+						<div class="stat_stat"><?= secondsToTime( (int) $data['Uptime'] ) ?></div>
 					</div>
 					<div class="bar_stat">
 						<span class="bar_fill"
-						      style="width: <?= $data['vitals']['CPULoad'] / (float) count( $data['hardware'] ) ?>%">
+						      style="width: <?= $data['CurrentLoad'] / (float) count( $data['NumCPUs'] ) ?>%">
 							</span>
 						<span class="bar_label">
-							CPU Load: <?= $data['vitals']['LoadAvg'] ?>
+							CPU Load: <?= $data['LoadAvg5'] ?>
 						</span>
 					</div>
 					<div class="bar_stat">
-						<span class="bar_fill" style="width: <?= $data['memory']['@attributes']['Percent'] ?>%"></span>
+						<span class="bar_fill" style="width: <?= $data['Memory'][''] ?>%"></span>
 						<span class="bar_label">
-							App: <?= $data['memory']['Details']['@attributes']['AppPercent'] ?>%,
+							App: <?= $data['Memory'] ?>%,
 							Buffers: <?= $data['memory']['Details']['@attributes']['BuffersPercent'] ?>%,
 							Cached: <?= $data['memory']['Details']['@attributes']['CachedPercent'] ?>%
 						</span>
@@ -148,8 +148,7 @@ function cluster_manager() {
 			</div>
 		<?php endforeach; ?>
 	</div>
-	<pre><?php var_dump( $meta );
-		var_dump( $_SERVER ) ?></pre>
+	<pre><?php var_dump( $meta ); ?></pre>
 	<?php
 }
 

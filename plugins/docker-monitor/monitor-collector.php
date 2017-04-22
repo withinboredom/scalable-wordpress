@@ -62,145 +62,14 @@ class DockerCollector {
 		} );
 	}
 
-	function requestMetrics( $ip ) {
-		$metrics = json_decode( wp_remote_get( "http://$ip/phpsysinfo/xml.php?plugin=complete&json" )['body'], JSON_OBJECT_AS_ARRAY );
-
-		return $metrics;
-	}
-
-	/**
-	 * Perform a GET operation on the local docker socket
-	 *
-	 * @param $url string The relative url to GET
-	 * @param string $parameters The query parameters to use
-	 *
-	 * @return array|mixed|object|string
-	 */
-	function get( $url, $parameters = "" ) {
-		$socket = fsockopen( 'unix:///var/run/docker.sock' );
-
-		$http = "GET $url$parameters HTTP/1.0\r\nConnection: Close\r\n\r\n";
-		fwrite( $socket, $http );
-		$data = "";
-		while ( ! feof( $socket ) ) {
-			$data .= fgets( $socket, 128 );
-		}
-		fclose( $socket );
-
-		$lines = explode( "\r\n", $data );
-		$data  = [];
-		$ready = false;
-		foreach ( $lines as $line ) {
-			if ( ! $ready && empty( $line ) ) {
-				$ready = true;
-			} else if ( $ready ) {
-				$data[] = $line;
-			}
-		}
-		unset( $line );
-		unset( $lines );
-
-		$data = json_decode( implode( "\r\n", $data ) );
-
-		return $data;
-	}
-
-	/**
-	 * POST to the local Docker socket
-	 *
-	 * @param $url string The relative url
-	 * @param $data array The object to post
-	 *
-	 * @return array|mixed|object|string|void
-	 */
-	function post( $url, $data ) {
-		$data   = json_encode( $data );
-		$length = strlen( $data );
-		$socket = fsockopen( 'unix:///var/run/docker.sock' );
-
-		$http = "POST $url HTTP/1.0\r\nContent-Type: application/json\r\nContent-Length: ${$length}\r\nConnection: Close\r\n\r\n$data";
-
-		fwrite( $socket, $http );
-		$data = "";
-		while ( ! feof( $socket ) ) {
-			$data .= fgets( $socket, 128 );
-		}
-		fclose( $socket );
-
-		$lines = explode( "\r\n", $data );
-		$data  = [];
-		$ready = false;
-		foreach ( $lines as $line ) {
-			if ( ! $ready && empty( $line ) ) {
-				$ready = true;
-			} else if ( $ready ) {
-				$data [] = $line;
-			}
-		}
-		unset( $line );
-		unset( $lines );
-
-		$data = json_decode( implode( "\r\n", $data ) );
-
-		return $data;
-	}
-
-	/**
-	 * Finds a list of service ids with a partial name match
-	 *
-	 * @param $class string The service name to partially match
-	 *
-	 * @return array An array of service ids
-	 */
-	function findServiceWithClass( $class ) {
-		$services = $this->get( '/services' );
-		$targets  = [];
-		$len      = 0 - strlen( $class );
-		foreach ( $services as $service ) {
-			if ( substr( $service->Spec->Name, $len ) === $class ) {
-				$targets[] = $service->ID;
-			}
-		}
-
-		return $targets;
-	}
-
-	/**
-	 * Gets a list of ips to a service by node
-	 *
-	 * @param $class string The service name to partially match
-	 *
-	 * @return array A map of nodes to containers
-	 */
-	function findContainerWithClassByNode( $class ) {
-		$serviceId = $this->findServiceWithClass( $class )[0];
-		$tasks     = $this->get( '/tasks' );
-
-		$containers = [];
-
-		foreach ( $tasks as $task ) {
-			if ( $task->ServiceID == $serviceId ) {
-				if ( ! isset( $containers[ $task->NodeID ] ) ) {
-					$containers[ $task->NodeID ] = [];
-				}
-
-				$containers[ $task->NodeID ] = array_merge( $containers[ $task->NodeID ], $task->NetworksAttachments[0]->Addresses );
-			}
-		}
-
-		return $containers;
-	}
-
 	function recordMetrics() {
 		if ( ! $this->isSwarm() ) {
 			return new WP_Error( 500, 'not a swarm' );
 		}
 
-		$nodes = get_transient( 'nodes' );
-		if ( empty( $nodes ) ) {
-			$nodes = $this->findContainerWithClassByNode( 'phpsysinfo' );
-			set_transient( 'nodes', $nodes, 60 );
-		}
+		$nodes = apply_filters( 'all_docker_nodes', [] );
+
+		$tasks = apply_filters( 'all_docker_tasks', [] );
 
 		$post = [
 			'post_author'    => 0,
@@ -212,27 +81,69 @@ class DockerCollector {
 			'meta_input'     => []
 		];
 
-		$tasks = $this->get( '/tasks' );
-
 		foreach ( $nodes as $node => $ips ) {
-			$docker = $this->get( "/nodes/$node" );
+			$docker = apply_filters( 'docker_node_info', $node );
 			foreach ( $ips as $ip ) {
 				$ip = explode( '/', $ip )[0];
 
-				$metrics                     = $this->requestMetrics( $ip );
+				$metrics = apply_filters( 'docker_node_vitals', $ip );
+
+				$node_tasks = apply_filters( 'node_tasks', [ 'tasks' => $tasks, 'node' => $node ] );
+
 				$post['meta_input'][ $node ] = [
-					'vitals'     => $metrics['Vitals']['@attributes'],
-					'hardware'   => $metrics['Hardware']['CPU']['CpuCore'],
-					'memory'     => $metrics['Memory'],
-					'filesystem' => $metrics['FileSystem']['Mount'],
-					'docker'     => $docker,
-					'tasks'      => array_filter( $tasks, function ( $task ) use ( $node ) {
-						return $task->NodeID == $node;
-					} ),
+					'Hostname'    => $docker['Hostname'],
+					'Ip'          => $docker['Ip'],
+					'Uptime'      => $metrics['Uptime'],
+					'LoadAvg5'    => $metrics['LoadAvg5'],
+					'LoadAvg10'   => $metrics['LoadAvg10'],
+					'LoadAvg15'   => $metrics['LoadAvg15'],
+					'CurrentLoad' => $metrics['CurrentLoad'],
+					'NumCPUs'     => $metrics['NumCPUs'],
+					'Memory'      => [
+						'Free'      => $metrics['MemoryFree'],
+						'Used'      => $metrics['MemoryUsed'],
+						'Total'     => $metrics['MemoryTotal'],
+						'App'       => $metrics['MemoryApp'],
+						'Buffers'   => $metrics['MemoryBuffers'],
+						'Cache'     => $metrics['MemoryCache'],
+						'SwapTotal' => $metrics['SwapTotal'],
+						'SwapUsed'  => $metrics['SwapUsed']
+					],
+					'Docker'      => [
+						'Role'         => $docker['Role'],
+						'Availability' => $docker['Availability'],
+						'NanoCPU'      => $docker['NanoCPU'],
+						'MemoryBytes'  => $docker['MemoryBytes'],
+						'Leader'       => $docker['Leader'],
+						'ReservedCPU'  => apply_filters( 'node_task_cpu_reserved', $node_tasks ),
+						'ReservedMem'  => apply_filters( 'node_task_mem_reserved', $node_tasks ),
+						'LimitsCPU'    => apply_filters( 'node_task_cpu_limits', $node_tasks ),
+						'LimitsMem'    => apply_filters( 'node_task_mem_limits', $node_tasks )
+					]
 				];
 			}
 		}
 
+		/*
+				foreach ( $nodes as $node => $ips ) {
+
+					foreach ( $ips as $ip ) {
+						$ip = explode( '/', $ip )[0];
+
+						$metrics                     = $this->requestMetrics( $ip );
+						$post['meta_input'][ $node ] = [
+							'vitals'     => $metrics['Vitals']['@attributes'],
+							'hardware'   => $metrics['Hardware']['CPU']['CpuCore'],
+							'memory'     => $metrics['Memory'],
+							'filesystem' => $metrics['FileSystem']['Mount'],
+							'docker'     => $docker,
+							'tasks'      => array_filter( $tasks, function ( $task ) use ( $node ) {
+								return $task->NodeID == $node;
+							} ),
+						];
+					}
+				}
+		*/
 		wp_insert_post( $post );
 
 		return true;

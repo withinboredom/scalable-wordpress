@@ -6,3 +6,10 @@ services:
     command: memcached -m 512m
     deploy:
       replicas: 2
+      resources:
+        reservations:
+          cpus: '0.2'
+          memory: '512m'
+        limits:
+          cpus: '1.0'
+          memory: '712m'
