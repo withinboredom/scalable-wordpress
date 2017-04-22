@@ -32,76 +32,56 @@ This is based on lots of information around the web:
 
 # Deploying
 
-Using this repository is relatively easy...There's "developer mode" using Docker Compose, and a 
-phased deployment using Docker Swarm
-
-## Docker Compose
-
-Simply run `./init.sh` in the root of the repo.
-
-Some useful scaling:
-
-`docker-compose scale wordpress=2 memcached=2`
+This is only meant to be deployed on Docker 1.13+ swarm mode.
 
 ## Docker Swarm
 
 Deploying with Docker Swarm for the first time:
 
-Start the db cluster:
-```sh
-docker stack deploy -c deploy_phase_1.yml blog && watch docker service ls
-
-# output
-ID            NAME            MODE        REPLICAS  IMAGE
-nue7n61snea1  blog_node       replicated  0/0       colinmollenhour/mariadb-galera-swarm:latest
-pzanqapw0vw8  blog_wordpress  replicated  0/0       withinboredom/scalable-wordpress:latest
-rhlqgvede3td  blog_seed       replicated  0/1       colinmollenhour/mariadb-galera-swarm:latest <-- wait for this one
-shq3qpuf3afd  blog_memcached  replicated  2/2       memcached:latest
-yju62pr7pvfx  blog_traefik    replicated  1/1       traefik:latest
-```
-
-Wait for the blog_seed replica to be ready and then, continue to phase 2:
-```sh
-docker stack deploy -c deploy_phase_2.yml blog && watch docker service ls
-
-# output
-ID            NAME            MODE        REPLICAS  IMAGE
-2o04yu9m9cta  blog_seed       replicated  1/1       colinmollenhour/mariadb-galera-swarm:latest
-f8pdkh3lb2ch  blog_traefik    replicated  1/1       traefik:latest
-gtt0gkg3ja90  blog_wordpress  replicated  0/0       withinboredom/scalable-wordpress:latest
-l0a8hpmr2rez  blog_node       replicated  0/2       colinmollenhour/mariadb-galera-swarm:latest <-- wait for this one
-xfj0cb90nhbm  blog_memcached  replicated  2/2       memcached:latest
-```
-
-Once blog_node is ready, continue to phase 3:
+From the root of the repo, run `swarm/turn-up.sh`, the output should look similar to:
 
 ```sh
-docker stack deploy -c deploy_phase_3.yml blog && watch docker service ls
-
-# output
-ID            NAME            MODE        REPLICAS  IMAGE
-2o04yu9m9cta  blog_seed       replicated  0/0       colinmollenhour/mariadb-galera-swarm:latest
-f8pdkh3lb2ch  blog_traefik    replicated  1/1       traefik:latest
-gtt0gkg3ja90  blog_wordpress  replicated  0/2       withinboredom/scalable-wordpress:latest <-- wait for this one
-l0a8hpmr2rez  blog_node       replicated  2/3       colinmollenhour/mariadb-galera-swarm:latest <-- wait for this one
-xfj0cb90nhbm  blog_memcached  replicated  2/2       memcached:latest
+Creating secret blog_xtrabackup_password
+Creating secret blog_SECURE_AUTH_SALT
+Creating secret blog_NONCE_SALT
+Creating secret blog_AUTH_KEY
+Creating secret blog_LOGGED_IN_SALT
+Creating secret blog_LOGGED_IN_KEY
+Creating secret blog_mysql_root_password
+Creating secret blog_NONCE_KEY
+Creating secret blog_AUTH_SALT
+Creating secret blog_mysql_password
+Creating secret blog_SECURE_AUTH_KEY
+Creating network blog_default
+Creating service blog_seed
+Waiting for blog_seed
+1 of 1 up
+Creating service blog_node
+Waiting for blog_node
+1 of 2 up
+2 of 2 up
+blog_node scaled to 3
+Waiting for blog_node
+3 of 3 up
+blog_seed scaled to 0
+Waiting for blog_seed
+Creating service blog_memcached
+Waiting for blog_memcached
+2 of 2 up
+Creating service blog_phpsysinfo
+Waiting for blog_phpsysinfo
+1 of 1 up
+Creating service blog_master
+Waiting for blog_master
+1 of 1 up
+Creating service blog_wordpress
+Waiting for blog_wordpress
+2 of 2 up
+Creating service blog_traefik
+Waiting for blog_traefik
+1 of 1 up
+blog_traefik
+blog_traefik
 ```
 
-At this point, the `wordpress` service should start coming up. Once available, navigate to the host 
-(ex: http://www.withinboredom.info) and install WordPress. Once you have it set up,
-you're ready to continue to phase 4:
-
-```sh
-docker stack deploy -c deploy_phase_4.yml blog && watch docker service ls
-
-# output
-ID            NAME            MODE        REPLICAS  IMAGE
-2o04yu9m9cta  blog_seed       replicated  0/0       colinmollenhour/mariadb-galera-swarm:latest
-f8pdkh3lb2ch  blog_traefik    replicated  1/1       traefik:latest
-gtt0gkg3ja90  blog_wordpress  replicated  1/2       withinboredom/scalable-wordpress:latest
-l0a8hpmr2rez  blog_node       replicated  3/3       colinmollenhour/mariadb-galera-swarm:latest
-xfj0cb90nhbm  blog_memcached  replicated  2/2       memcached:latest
-```
-
-Each new container will include the themes and plugins defined in the `PLUGINS` and `THEMES` environment
-variables.
+If you'd like to enable developer mode (single node swarm only) -- run `swarm/dev.sh` from the root of the repo.
