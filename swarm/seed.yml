@@ -11,8 +11,6 @@ services:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
       - NODE_ADDRESS=eth0
     command: seed
-    volumes:
-      - mysql-data:/var/lib/mysql
     secrets:
       - xtrabackup_password
       - mysql_password
@@ -22,6 +20,3 @@ services:
       placement:
         constraints:
           - node.role == manager
-volumes:
-  mysql-data:
-    driver: local

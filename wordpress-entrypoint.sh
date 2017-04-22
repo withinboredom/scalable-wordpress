@@ -189,48 +189,6 @@ EOPHP
 		    chmod o+rw /var/run/docker.sock
 		fi
 
-		if [ "$PLUGINS" ]; then
-		    IFS="," read -ra PLUGINS <<< $PLUGINS
-		    for i in "${PLUGINS[@]}"; do
-		        PLUGIN=${i%@*}
-		        VERSION=${i##*@}
-		        if [ "$VERSION" == "latest" ]; then
-		            VERSION=""
-		        fi
-
-		        if [ "$VERSION" == "$PLUGIN" ]; then
-		            VERSION=""
-		        fi
-
-		        if [ "$VERSION" ]; then
-		            VERSION="--version $VERSION"
-		        fi
-
-		        runuser -u www-data -g www-data -p -- wp plugin install $PLUGIN $VERSION --force --activate
-		    done
-		fi
-
-		if [ "$THEMES" ]; then
-		    IFS="," read -ra THEMES <<< $THEMES
-		    for i in "${THEMES[@]}"; do
-		        THEME=${i%@*}
-		        VERSION=${i##*@}
-		        if [ "$VERSION" == "latest" ]; then
-		            VERSION=""
-		        fi
-
-		        if [ "$VERSION" == "$THEME" ]; then
-		            VERSION=""
-		        fi
-
-		        if [ "$VERSION" ]; then
-		            VERSION="--version $VERSION"
-		        fi
-
-		        runuser -u www-data -g www-data -p -- wp theme install $THEME $VERSION --force --activate
-		    done
-		fi
-
 		TERM=dumb php -- <<'EOPHP'
 <?php
 // database might not exist, so let's try creating it (just to be safe)
@@ -279,10 +237,13 @@ EOPHP
 		unset "$e"
 	done
 
+    echo "Flushing rewrite rules"
 	runuser -u www-data -g www-data -p -- wp rewrite flush --hard
 fi
 
+echo "Setting permissions"
 chown -R nobody wp-content
 chown www-data wp-content
 
+echo "Starting up for the first time..."
 exec "$@"
