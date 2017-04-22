@@ -38,8 +38,6 @@ function cluster_manager() {
 			$meta[ $node ] = unserialize( $datum );
 		}
 	}
-	$meta["$node-2"] = $meta[ $node ];
-	$meta["$node-3"] = $meta[ $node ];
 
 	$cluster_cpu_allocation = [
 		'reserved' => array_reduce( $meta, function ( $carry, $data ) {
