@@ -13,5 +13,5 @@ Domain Path: /languages
 */
 
 add_action( 'wp_enqueue_scripts', function () {
-	wp_enqueue_script( 'gack', "/wp-content/mu-plugins/gack.js", [], false, true );
+	wp_enqueue_script( 'gack', "/wp-content/gack/gack.js", [], false, true );
 } );
